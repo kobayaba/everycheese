@@ -20,7 +20,7 @@ from .factories import CheeseFactory
 pytestmark = pytest.mark.django_db
 
 def test_good_cheese_list_view(rf):
-    request =rf.get(reverse('cheeses:list'))
+    request = rf.get(reverse('cheeses:list'))
     response = CheeseListView.as_view()(request)
     assertContains(response, 'Cheese List')
 
@@ -58,3 +58,17 @@ def test_detail_contains_cheese_data(rf):
     assertContains(response, cheese.name)
     assertContains(response, cheese.get_firmess_display())
     assertContains(response, cheese.country_of_origin.name)
+
+def test_cheese_create_form_valid(rf, admin_user):
+    form_data = {
+        'name':'Paski Sir',
+        'description':'A salty hard cheese',
+        'firmess': Cheese.Firmess.HARD
+    }
+    request = rf.post(reverse('cheeses:add'), form_data)
+    request.user = admin_user
+    response = CheeseCreateView.as_view()(request)
+    cheese = Cheese.objects.get(name='Paski Sir')
+    assert cheese.description == 'A salty hard cheese'
+    assert cheese.firmess == Cheese.Firmess.HARD
+    assert cheese.creator == admin_user
